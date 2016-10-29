@@ -4,37 +4,41 @@ import scipy.misc
 import matplotlib.pyplot as plt
 from scipy.ndimage.interpolation import geometric_transform
 
-def get_data(n=10000):
+def get_data(n=100000, n_perturbed = 0, show = False):
     """
-    Returns 2n training examples and their corresponding labels.
-    The second half (n+1 to 2n) consists of perturbed images using skewing.
+    Returns n training examples and their corresponding labels.
+    n_perturbed images and labels are appended if specified.
     """
     # Images (60x60)
     train_X = np.fromfile('train_x.bin', count=(n*60*60), dtype='uint8')
     train_X = train_X.reshape((n,60,60))
     # Labels
     train_y = pd.read_csv('train_y.csv', delimiter=',', index_col=0, engine='python').values[:n]
-    # Perturb data
-    perturbed_X, perturbed_y = perturb_data(train_X, train_y, n)
+    # Perturb data if specified
+    X, y = perturb_data(train_X, train_y, n, n_perturbed)
 
-    print "Displaying example perturbation (skewing)"
-    plt.figure()
-    plt.imshow(np.concatenate((train_X[0],np.zeros((60,60)),perturbed_X[n]),axis=-1),cmap="gray")
-    plt.show()
+    if (show and n_perturbed > 0):
+        print "Displaying example perturbation (skewing)"
+        plt.figure()
+        plt.imshow(np.concatenate((X[0], np.zeros((60,60)), X[n]), axis=-1), cmap="gray")
+        plt.show()
 
-    return perturbed_X, perturbed_y
+    return X, y
 
-def perturb_data(X, y, n):
+def perturb_data(X, y, n, n_perturbed):
     """
     Simple data perturbation using a normalized skewing procedure.
     """
-    print "Perturbing data..."
-    X_perturbed = X.copy()
-    X_perturbed = np.concatenate([X_perturbed, perturb_skew(X_perturbed)])
-    y_perturbed = np.concatenate([y]*2)
-    print "Perturbation complete."
-
-    return X_perturbed, y_perturbed
+    if (n_perturbed > 0):
+        X_all = X.copy() # All original examples
+        print "Perturbing data..."
+        X_perturbed = X[0:n_perturbed].copy() # Number of examples to copy
+        X_perturbed = np.concatenate([X_all, perturb_skew(X_perturbed)])
+        y_perturbed = np.concatenate([y, y[0:n_perturbed]])
+        print "Perturbation complete."
+        return X_perturbed, y_perturbed
+    else:
+        return X, y
 
 def perturb_skew(X):
     """
