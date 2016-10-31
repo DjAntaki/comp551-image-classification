@@ -10,17 +10,18 @@ def get_data(n=10000):
     The second half (n+1 to 2n) consists of perturbed images using skewing.
     """
     # Images (60x60)
-    train_X = np.fromfile('train_x.bin', count=(n*60*60), dtype='uint8')
+    train_X = np.fromfile('../data/train_x.bin', count=(n*60*60), dtype='uint8')
     train_X = train_X.reshape((n,60,60))
     # Labels
-    train_y = pd.read_csv('train_y.csv', delimiter=',', index_col=0, engine='python').values[:n]
+    train_y = pd.read_csv('../data/train_y.csv', delimiter=',', index_col=0, engine='python').values[:n]
     # Perturb data
     perturbed_X, perturbed_y = perturb_data(train_X, train_y, n)
 
-    print "Displaying example perturbation (skewing)"
-    plt.figure()
-    plt.imshow(np.concatenate((train_X[0],np.zeros((60,60)),perturbed_X[n]),axis=-1),cmap="gray")
-    plt.show()
+    if False :
+        print "Displaying example perturbation (skewing)"
+        plt.figure()
+        plt.imshow(np.concatenate((train_X[0],np.zeros((60,60)),perturbed_X[n]),axis=-1),cmap="gray")
+        plt.show()
 
     return perturbed_X, perturbed_y
 

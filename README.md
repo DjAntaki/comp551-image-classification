@@ -1,6 +1,8 @@
 # comp551-image-classification
 
+## Dependencies
 
-Note from Vincent : If you want to run the scripts, you have to do it from the root folder
-
-    python ./scripts/thescripttorun.py
+- Scikit-image
+- Theano
+- Keras
+- Lasagne
