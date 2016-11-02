@@ -1,3 +1,5 @@
+"Source: http://deeplearning.net/tutorial/logreg.html"
+
 from __future__ import print_function
 __docformat__ = 'restructedtext en'
 import six.moves.cPickle as pickle
@@ -8,11 +10,11 @@ import timeit
 import numpy as np
 import theano
 import theano.tensor as T
+from sklearn.model_selection import train_test_split
 
 class LogisticRegression(object):
     """
     Logistic Regression using Stochastic Gradient Descent
-    Source: http://deeplearning.net/tutorial/logreg.html
     """
     def __init__(self, input, n_in, n_out):
         # Initialize W (n_in by n_out) with 0s
@@ -66,51 +68,20 @@ class LogisticRegression(object):
             raise NotImplementedError()
 
 def load_data(dataset):
-    ''' Loads the dataset
-
-    :type dataset: string
-    :param dataset: the path to the dataset (here MNIST)
-    '''
-
-    #############
-    # LOAD DATA #
-    #############
-
-    # Download the MNIST dataset if it is not present
-    data_dir, data_file = os.path.split(dataset)
-    if data_dir == "" and not os.path.isfile(dataset):
-        # Check if dataset is in the data directory.
-        new_path = os.path.join(
-            os.path.split(__file__)[0],
-            "..",
-            "data",
-            dataset
-        )
-        if os.path.isfile(new_path) or data_file == 'mnist.pkl.gz':
-            dataset = new_path
-
-    if (not os.path.isfile(dataset)) and data_file == 'mnist.pkl.gz':
-        from six.moves import urllib
-        origin = (
-            'http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz'
-        )
-        print('Downloading data from %s' % origin)
-        urllib.request.urlretrieve(origin, dataset)
-
+    """
+    Load the dataset into shared memory.
+    """
     print('... loading data')
-
-    # Load the dataset
-    with gzip.open(dataset, 'rb') as f:
-        try:
-            train_set, valid_set, test_set = pickle.load(f, encoding='latin1')
-        except:
-            train_set, valid_set, test_set = pickle.load(f)
-    # train_set, valid_set, test_set format: tuple(input, target)
-    # input is a np.ndarray of 2 dimensions (a matrix)
-    # where each row corresponds to an example. target is a
-    # np.ndarray of 1 dimension (vector) that has the same length as
-    # the number of rows in the input. It should give the target
-    # to the example with the same index in the input.
+    X, y = dataset
+    # Split train and valid
+    X_train, X_valid, y_train, y_valid = train_test_split(X, y,
+        test_size=0.25, random_state=0)
+    # Recombine train and valid
+    X_train = np.reshape(X_train, (X_train.shape[0], 60*60))
+    y_train = np.reshape(y_train, (y_train.shape[0], ))
+    X_valid = np.reshape(X_valid, (X_valid.shape[0], 60*60))
+    y_valid = np.reshape(y_valid, (y_valid.shape[0], ))
+    train_set, valid_set = (X_train, y_train), (X_valid, y_valid)
 
     def shared_dataset(data_xy, borrow=True):
         """ Function that loads the dataset into shared variables
@@ -137,17 +108,14 @@ def load_data(dataset):
         # lets ous get around this issue
         return shared_x, T.cast(shared_y, 'int32')
 
-    test_set_x, test_set_y = shared_dataset(test_set)
     valid_set_x, valid_set_y = shared_dataset(valid_set)
     train_set_x, train_set_y = shared_dataset(train_set)
 
-    rval = [(train_set_x, train_set_y), (valid_set_x, valid_set_y),
-            (test_set_x, test_set_y)]
+    rval = [(train_set_x, train_set_y), (valid_set_x, valid_set_y)]
+
     return rval
 
-
-def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
-                           dataset='mnist.pkl.gz',
+def sgd_optimization(dataset, learning_rate=0.13, n_epochs=1000,
                            batch_size=600):
     """
     Demonstrate stochastic gradient descent optimization of a log-linear
@@ -163,20 +131,16 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     :param n_epochs: maximal number of epochs to run the optimizer
 
     :type dataset: string
-    :param dataset: the path of the MNIST dataset file from
-                 http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz
+    :param dataset: (X, y) tuple of training data
 
     """
     datasets = load_data(dataset)
-
     train_set_x, train_set_y = datasets[0]
     valid_set_x, valid_set_y = datasets[1]
-    test_set_x, test_set_y = datasets[2]
 
     # compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0] // batch_size
     n_valid_batches = valid_set_x.get_value(borrow=True).shape[0] // batch_size
-    n_test_batches = test_set_x.get_value(borrow=True).shape[0] // batch_size
 
     ######################
     # BUILD ACTUAL MODEL #
@@ -192,8 +156,8 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
 
     # construct the logistic regression class
-    # Each MNIST image has size 28*28
-    classifier = LogisticRegression(input=x, n_in=28 * 28, n_out=10)
+    # Each image has size 60*60
+    classifier = LogisticRegression(input=x, n_in=60 * 60, n_out=20)
 
     # the cost we minimize during training is the negative log likelihood of
     # the model in symbolic format
@@ -201,15 +165,6 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
 
     # compiling a Theano function that computes the mistakes that are made by
     # the model on a minibatch
-    test_model = theano.function(
-        inputs=[index],
-        outputs=classifier.errors(y),
-        givens={
-            x: test_set_x[index * batch_size: (index + 1) * batch_size],
-            y: test_set_y[index * batch_size: (index + 1) * batch_size]
-        }
-    )
-
     validate_model = theano.function(
         inputs=[index],
         outputs=classifier.errors(y),
@@ -248,12 +203,12 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     ###############
     print('... training the model')
     # early-stopping parameters
-    patience = 5000  # look as this many examples regardless
+    patience = 1000000  # look as this many examples regardless
     patience_increase = 2  # wait this much longer when a new best is
                                   # found
     improvement_threshold = 0.995  # a relative improvement of this much is
                                   # considered significant
-    validation_frequency = min(n_train_batches, patience // 2)
+    validation_frequency = n_train_batches
                                   # go through this many
                                   # minibatche before checking the network
                                   # on the validation set; in this case we
@@ -297,24 +252,6 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                         patience = max(patience, iter * patience_increase)
 
                     best_validation_loss = this_validation_loss
-                    # test it on the test set
-
-                    test_losses = [test_model(i)
-                                   for i in range(n_test_batches)]
-                    test_score = np.mean(test_losses)
-
-                    print(
-                        (
-                            '     epoch %i, minibatch %i/%i, test error of'
-                            ' best model %f %%'
-                        ) %
-                        (
-                            epoch,
-                            minibatch_index + 1,
-                            n_train_batches,
-                            test_score * 100.
-                        )
-                    )
 
                     # save the best model
                     with open('best_model.pkl', 'wb') as f:
@@ -327,17 +264,15 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     end_time = timeit.default_timer()
     print(
         (
-            'Optimization complete with best validation score of %f %%,'
-            'with test performance %f %%'
+            'Optimization complete with best validation score of %f %%'
         )
-        % (best_validation_loss * 100., test_score * 100.)
+        % (best_validation_loss * 100.)
     )
     print('The code run for %d epochs, with %f epochs/sec' % (
         epoch, 1. * epoch / (end_time - start_time)))
     print(('The code for file ' +
            os.path.split(__file__)[1] +
            ' ran for %.1fs' % ((end_time - start_time))), file=sys.stderr)
-
 
 def predict():
     """
@@ -365,4 +300,4 @@ def predict():
 
 
 if __name__ == '__main__':
-    sgd_optimization_mnist()
+    sgd_optimization()

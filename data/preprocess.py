@@ -10,10 +10,10 @@ def get_data(n=100000, n_perturbed = 0, show = False):
     n_perturbed images and labels are appended if specified.
     """
     # Images (60x60)
-    train_X = np.fromfile('../data/train_x.bin', count=(n*60*60), dtype='uint8')
+    train_X = np.fromfile('./data/train_x.bin', count=(n*60*60), dtype='uint8')
     train_X = train_X.reshape((n,60,60))
     # Labels
-    train_y = pd.read_csv('../data/train_y.csv', delimiter=',', index_col=0, engine='python').values[:n]
+    train_y = pd.read_csv('./data/train_y.csv', delimiter=',', index_col=0, engine='python').values[:n]
     # Perturb data if specified
     X, y = perturb_data(train_X, train_y, n, n_perturbed)
 
@@ -62,5 +62,3 @@ def skew(image):
         dec = (dl*(l-h))/h
         return l, c+dec
     return geometric_transform(image, mapping, (h, l), order=5, mode='nearest')
-
-get_data(10,10,True)
