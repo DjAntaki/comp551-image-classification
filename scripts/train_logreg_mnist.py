@@ -1,8 +1,8 @@
 from data.preprocess import get_data, get_data_keras
-from models import log_reg
 import numpy as np
-import six.moves.cPickle as pickle
 from skimage.transform import resize
+from operator import itemgetter
+from models import log_reg
 from sklearn.metrics import accuracy_score
 
 # Training Configuration
@@ -25,10 +25,15 @@ else:
     X, y = dataset
 
 print("Building logistic regression model")
-log_reg.sgd_optimization(dataset, learning_rate, n_epochs, batch_size)
+#log_reg.sgd_optimization_MNIST();
 
 X_valid, y_valid = X[:1000], y[:1000]
-#X_valid, y_valid = get_data_keras(1000)
 
-predictions = log_reg.predict(X_valid)
+#Downsizing...
+num_example = len(X_valid)
+X_d = np.zeros(shape=(num_example,1,28,28),dtype="float32")
+for i, x in enumerate(X_valid):
+    X_d[i] = resize(x,(28,28))
+
+predictions = log_reg.predict_MNIST(X_d)
 print accuracy_score(y_valid, predictions)
