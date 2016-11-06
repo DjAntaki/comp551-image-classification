@@ -2,10 +2,9 @@ import numpy as np
 import pandas as pd
 import scipy.misc
 import matplotlib.pyplot as plt
-import six.moves.cPickle as pickle
-import json
+from scipy import ndimage
 from scipy.ndimage.interpolation import geometric_transform
-from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+from keras.preprocessing.image import ImageDataGenerator
 
 def get_data(n=100000, n_perturbed = 0, show = False):
     """
@@ -22,18 +21,34 @@ def get_data(n=100000, n_perturbed = 0, show = False):
     X, y = perturb_data(train_X, train_y, n, n_perturbed)
     print "Done."
 
-    if (show and n_perturbed > 0):
+    if (show):
         print "Displaying example perturbation (skewing)"
+        plt.figure()
+        for i in range(0, 9):
+            #im = X[i]
+            #sx = ndimage.sobel(im, axis=1)
+            #sy = ndimage.sobel(im, axis=0)
+            #sob = np.hypot(sx, sy)
+            #sob *= 255.0 / np.max(sob)
+            plt.subplot(330 + 1 + i)
+            plt.imshow(X[i], cmap="gray")
+        plt.show()
+    if (show and n_perturbed > 0):
         plt.figure()
         plt.imshow(np.concatenate((X[0], np.zeros((60,60)), X[n]), axis=-1), cmap="gray")
         plt.show()
 
     return X, y
 
-def get_data_keras(n=100000, n_perturbed = 0, save_data = False):
+def get_data_keras(n=100000, n_perturbed = 0, show = False):
+    """
+    Returns n training examples and their corresponding labels.
+    Applies ZCA whitening (including feature normalization and scaling).
+    n_perturbed images and labels are appended if specified.
+    """
     datagen = ImageDataGenerator(
-        featurewise_center=True,
-        featurewise_std_normalization=True,
+        featurewise_center=False,
+        featurewise_std_normalization=False,
         zca_whitening=True)
 
     print "Getting data..."
@@ -47,26 +62,26 @@ def get_data_keras(n=100000, n_perturbed = 0, save_data = False):
     print "Fitting data..."
     datagen.fit(train_X)
     for X_batch, y_batch in datagen.flow(train_X, train_y, batch_size=n):
-        #print "Displaying example perturbation (Keras)"
-        #print y_batch[0]
-        #plt.figure()
-        #plt.imshow(X_batch[0].reshape(60,60), cmap="gray")
-        #plt.show()
+        if (show):
+            print "Displaying example perturbation (Keras)"
+            plt.figure()
+            for i in range(0, 9):
+                print y_batch[i]
+                plt.subplot(330 + 1 + i)
+                plt.imshow(X_batch[i].reshape(60,60), cmap="gray")
+            plt.show()
         X_batch = X_batch.reshape(n,60,60)
-
         print "Done."
-        if (save_data and n_perturbed == 0):
-            print "Saving dataset..."
-            with open('./data/keras_data.pkl', 'wb') as f:
-                pickle.dump((X_batch, y_batch), f)
-                print "Done."
 
         if (n_perturbed == 0):
             return X_batch, y_batch
         else:
-            return add_keras_perturbed(X_batch, y_batch, n_perturbed, save_data)
+            return add_keras_perturbed(X_batch, y_batch, n_perturbed, show)
 
-def add_keras_perturbed(X, y, n, save_data):
+def add_keras_perturbed(X, y, n, show):
+    """
+    Apply image perturbation using the specified Keras datagen parameters.
+    """
     datagen = ImageDataGenerator(
             rotation_range=40,
             width_shift_range=0.2,
@@ -77,22 +92,20 @@ def add_keras_perturbed(X, y, n, save_data):
             fill_mode='nearest')
 
     print "Perturbing data..."
-    for X_batch, y_batch in datagen.flow(X, y, batch_size=n):
-        #print "Displaying example perturbation (Keras)"
-        #print y_batch[0]
-        #plt.figure()
-        #plt.imshow(X_batch[0].reshape(60,60), cmap="gray")
-        #plt.show()
+    X_2 = X.reshape(X.shape[0],1,60,60).astype('float32')
+    for X_batch, y_batch in datagen.flow(X_2, y, batch_size=n):
+        if (show):
+            print "Displaying example perturbation (Keras)"
+            plt.figure()
+            for i in range(0, 9):
+                print y_batch[i]
+                plt.subplot(330 + 1 + i)
+                plt.imshow(X_batch[i].reshape(60,60), cmap="gray")
+            plt.show()
         X_batch = X_batch.reshape(n,60,60)
         X = np.concatenate([X, X_batch])
         y = np.concatenate([y, y_batch])
         print "Done."
-
-        if (save_data):
-            print "Saving dataset..."
-            with open('./data/keras_data_perturbed.pkl', 'wb') as f:
-                pickle.dump((X, y), f)
-                print "Done."
 
         return X, y
 

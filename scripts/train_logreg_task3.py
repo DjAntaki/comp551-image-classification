@@ -7,11 +7,12 @@ from sklearn.metrics import accuracy_score
 
 # Training Configuration
 n_train = 100000 # Max 100000
+n_perturbed = 100000
 # Model Configuration
 learning_rate = 0.09
 n_epochs = 1000
 batch_size = 1
-load = True
+load = False
 
 if (load):
     print "Loading data..."
@@ -21,7 +22,7 @@ if (load):
     X, y = dataset
     print "Done."
 else:
-    dataset = get_data_keras(n_train)
+    dataset = get_data_keras(n_train, n_perturbed)
     X, y = dataset
 
 print("Building logistic regression model")
