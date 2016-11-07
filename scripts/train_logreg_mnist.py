@@ -12,11 +12,12 @@ learning_rate = 0.09
 n_epochs = 1000
 batch_size = 1
 
-dataset = get_data_keras(n_valid)
+dataset = get_data(n_valid)
 X_valid, y_valid = dataset
+X_valid = X_valid*1.0
 
 print("Building logistic regression model using MNIST dataset...")
-#log_reg.sgd_optimization_MNIST();
+log_reg.sgd_optimization_MNIST();
 print("Done.")
 
 print("Downsizing validation set...")

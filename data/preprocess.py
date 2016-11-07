@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from scipy import ndimage
 from scipy.ndimage.interpolation import geometric_transform
 from keras.preprocessing.image import ImageDataGenerator
+from skimage import feature, filters
+from skimage.morphology import disk
 
 def get_data(n=100000, n_perturbed = 0, show = False):
     """
@@ -25,7 +27,10 @@ def get_data(n=100000, n_perturbed = 0, show = False):
         print "Displaying example perturbation (skewing)"
         plt.figure()
         for i in range(0, 9):
-            #im = X[i]
+            #edges = feature.canny(X[i], sigma = 1)
+            #threshold_global_otsu = filters.threshold_otsu(X[i])
+            #res = X[i] >= threshold_global_otsu
+            #res = X[i] >= 255
             #sx = ndimage.sobel(im, axis=1)
             #sy = ndimage.sobel(im, axis=0)
             #sob = np.hypot(sx, sy)
@@ -38,7 +43,7 @@ def get_data(n=100000, n_perturbed = 0, show = False):
         plt.imshow(np.concatenate((X[0], np.zeros((60,60)), X[n]), axis=-1), cmap="gray")
         plt.show()
 
-    return X, y
+    return (X[:] >= 255)*1, y
 
 def get_data_keras(n=100000, n_perturbed = 0, show = False):
     """
@@ -49,16 +54,19 @@ def get_data_keras(n=100000, n_perturbed = 0, show = False):
     datagen = ImageDataGenerator(
         featurewise_center=False,
         featurewise_std_normalization=False,
-        zca_whitening=True)
+        zca_whitening=False)
 
     print "Getting data..."
     # Images (60x60)
     train_X = np.fromfile('./data/train_x.bin', count=(n*60*60), dtype='uint8')
+    # Filter
+    train_X[:] = (train_X[:] >= 255)*1
     train_X = train_X.reshape(n,1,60,60).astype('float32')
     # Labels
     train_y = pd.read_csv('./data/train_y.csv', delimiter=',', index_col=0, engine='python').values[:n]
     train_y = train_y.reshape(n,).astype('float32')
     print "Done."
+
     print "Fitting data..."
     datagen.fit(train_X)
     for X_batch, y_batch in datagen.flow(train_X, train_y, batch_size=n):
@@ -66,7 +74,6 @@ def get_data_keras(n=100000, n_perturbed = 0, show = False):
             print "Displaying example perturbation (Keras)"
             plt.figure()
             for i in range(0, 9):
-                print y_batch[i]
                 plt.subplot(330 + 1 + i)
                 plt.imshow(X_batch[i].reshape(60,60), cmap="gray")
             plt.show()
@@ -84,10 +91,10 @@ def add_keras_perturbed(X, y, n, show):
     """
     datagen = ImageDataGenerator(
             rotation_range=40,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
+            width_shift_range=0.1,
+            height_shift_range=0.1,
             shear_range=0.2,
-            zoom_range=0.2,
+            zoom_range=0.1,
             horizontal_flip=True,
             fill_mode='nearest')
 
@@ -98,7 +105,6 @@ def add_keras_perturbed(X, y, n, show):
             print "Displaying example perturbation (Keras)"
             plt.figure()
             for i in range(0, 9):
-                print y_batch[i]
                 plt.subplot(330 + 1 + i)
                 plt.imshow(X_batch[i].reshape(60,60), cmap="gray")
             plt.show()
