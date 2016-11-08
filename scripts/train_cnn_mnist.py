@@ -6,10 +6,12 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
 from keras import backend as K
+import tensorflow as tf
+tf.python.control_flow_ops = tf
 
 batch_size = 128
 nb_classes = 10
-nb_epoch = 12
+nb_epoch = 2
 
 # input image dimensions
 img_rows, img_cols = 28, 28
