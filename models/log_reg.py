@@ -286,7 +286,7 @@ def sgd_optimization(dataset, learning_rate=0.13, n_epochs=1000,
     ###############
     print('... training the model')
     # early-stopping parameters
-    patience = 200000  # look as this many examples regardless
+    patience = 1000000  # look as this many examples regardless
     patience_increase = 2  # wait this much longer when a new best is
                                   # found
     improvement_threshold = 0.995  # a relative improvement of this much is
@@ -565,8 +565,8 @@ def predict(X):
 
     X = np.reshape(X, (X.shape[0], 60*60))
     predicted_values = predict_model(X)
-    print("Predicted values for the first 10 examples in test set:")
-    print(predicted_values[:10])
+    print("Predicted values for the first 100 examples in test set:")
+    print(predicted_values[:100])
     return predicted_values;
 
 def predict_MNIST(X):
@@ -597,6 +597,6 @@ def predict_MNIST(X):
 
     predicted_values = np.apply_along_axis(argmax2, 1, predict_model(X))
 
-    print("Predicted values for the first 10 examples in test set:")
-    print(predicted_values[:10])
+    print("Predicted values for the first 100 examples in test set:")
+    print(predicted_values[:100])
     return predicted_values;

@@ -6,7 +6,7 @@ from keras.layers import Convolution2D, MaxPooling2D
 def build_cnn(input_shape, nb_classes, depth, kernel_size, pool_size, nb_filters, dropout=0.5,activation='relu'):
     model = Sequential()
 
-    for d in depth:
+    for d in range(depth):
         model.add(Convolution2D(nb_filters, kernel_size[0], kernel_size[1],
                                 border_mode='valid',
                                 input_shape=input_shape))

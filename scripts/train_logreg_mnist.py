@@ -5,35 +5,35 @@ from operator import itemgetter
 from models import log_reg
 from sklearn.metrics import accuracy_score
 
-# Training Configuration
-n_train = 100000 # Max 100000
+# Validation Examples
+n_valid = 1000 # Max 100000
 # Model Configuration
 learning_rate = 0.09
 n_epochs = 1000
 batch_size = 1
-load = True
 
-if (load):
-    print "Loading data..."
-    pickle_file = open('./data/keras_data.pkl', 'rb')
-    dataset = pickle.load(pickle_file)
-    pickle_file.close()
-    X, y = dataset
-    print "Done."
-else:
-    dataset = get_data_keras(n_train)
-    X, y = dataset
+dataset = get_data(n_valid)
+X_valid, y_valid = dataset
+X_valid = X_valid*1.0
 
-print("Building logistic regression model")
+print("Building logistic regression model using MNIST dataset...")
 #log_reg.sgd_optimization_MNIST();
+print("Done.")
 
-X_valid, y_valid = X[:1000], y[:1000]
+print("Downsizing validation set...")
+X_valid = resize(X_valid)
+print("Done.")
 
-#Downsizing...
-num_example = len(X_valid)
-X_d = np.zeros(shape=(num_example,1,28,28),dtype="float32")
-for i, x in enumerate(X_valid):
-    X_d[i] = resize(x,(28,28))
-
+print("Predicting...")
 predictions = log_reg.predict_MNIST(X_d)
+print("Accuracy score:")
 print accuracy_score(y_valid, predictions)
+
+def resize_dataset(X_valid):
+    print("Downsizing validation set...")
+    num_example = len(X_valid)
+    X_d = np.zeros(shape=(num_example,1,30,30),dtype="float32")
+    for i, x in enumerate(X_valid):
+        X_d[i] = resize(x,(30,30))
+    print("Done.")
+    return X_d
