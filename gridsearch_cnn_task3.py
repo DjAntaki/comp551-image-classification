@@ -1,4 +1,4 @@
-from data.preprocess import get_data
+from data.preprocess import get_data, get_data_train_valid
 from models import convnets
 from keras.utils import np_utils
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, History
@@ -16,16 +16,19 @@ nb_classes = 19
 
 ##Gridsearch part
 nb_filters_options = [32]
-pool_size_options = [(2, 2),(3,3)] # size of pooling area for max pooling
-kernel_size_options = [(3, 3),(5,5)] # convolution kernel size
-dropout_options = [0., 0.15, 0.45]
+pool_size_options = [(2,2)]
+#pool_size_options = [(2, 2),(3,3)] # size of pooling area for max pooling
+kernel_size_options = [(4,4)] # convolution kernel size
+#dropout_options = [0]
+dropout_options = [0., 0.35, 0.5]
 activation_options = ["relu"]
-depth_options = [2,3,4]
+depth_options = [2,3]
 
 #Training configuration
 ##Same for all models part
 num_examples = 100000
-n_perturbed = 50000
+n_perturbed = 30000
+n_perturbed = 0
 #num_examples = 100
 batch_size = 32
 nb_epoch = 80
@@ -35,36 +38,30 @@ split_lr_factor = 0.2
 split_lr_min = 0.0005
 
 ##Gridsearch part
-optimizer_options = ['Adadelta','Adamax','RMSprop','Nadam']
+optimizer_options = ['RMSprop']
 loss_function_options = ['categorical_crossentropy']
-learning_rate_options = [0.05, 0.02, 0.01, 0.005, 0.001, 0.0005]
+learning_rate_options = [0.06,0.05,0.04]
 
 #Other configuration
-savename = "cnn_task3_gridsearch_result1"
+qwe = '6'
+savename = "cnn_task3_gridsearch_result" +qwe
 
 ###
 ###
 
 print("Retrieving and augmenting data...")
-X,Y = get_data(num_examples,n_perturbed)
+X_train, y_train , X_valid, y_valid = get_data_train_valid(num_examples,n_perturbed,threshold=254,show=True)
 
-#Splitting data in train and validation set
-train_set, valid_set = utils.split_train_valid(zip(X,Y),shuffle=True)
-X_train, y_train = map(np.array,zip(*train_set))
-X_valid, y_valid = map(np.array, zip(*valid_set))
-
-#Reshaping data for convolution
-X_train = X_train.reshape(X_train.shape[0], num_channels, img_rows, img_cols)
-X_valid = X_valid.reshape(X_valid.shape[0], num_channels, img_rows, img_cols)
-
-#Making sure its in float32 and normalizing values in [0,1] interval.
+# Making sure its in float32 and normalizing values in [0,1] interval.
 X_train = X_train.astype('float32')
 X_valid = X_valid.astype('float32')
 X_train /= 255
 X_valid /= 255
 print(X_train.shape[0], 'train samples')
 print(X_valid.shape[0], 'test samples')
-
+# Reshaping data for convolution
+X_train = X_train.reshape(X_train.shape[0], num_channels, img_rows, img_cols)
+X_valid = X_valid.reshape(X_valid.shape[0], num_channels, img_rows, img_cols)
 # convert class vectors to binary class matrices
 Y_train = np_utils.to_categorical(y_train, nb_classes)
 Y_valid = np_utils.to_categorical(y_valid, nb_classes)
@@ -74,7 +71,7 @@ Y_valid = np_utils.to_categorical(y_valid, nb_classes)
 
 hash_template = "learning_rate:{}, depth:{}, nb_filters:{}, kernel_size:{}, pool_size:{}, dropout:{}, activation:{},loss_function:{}, optimizer:{}"
 #f = open("mlp_results_avg_embedding_glove",'w')
-f = open("cnn_grid_search_all_results",'w')
+f = open("cnn_gridsearch_all_results"+qwe,'w')
 best_model_yet = ""
 best_accuracy_yet = float('-inf')
 

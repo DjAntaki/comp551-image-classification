@@ -46,7 +46,7 @@ savename = "cnn_task3_gridsearch_result1"
 ###
 
 print("Retrieving and augmenting data...")
-X,Y = get_data(num_examples,n_perturbed)
+X,Y = get_data(num_examples,n_perturbed, )
 
 #Splitting data in train and validation set
 train_set, valid_set = utils.split_train_valid(zip(X,Y),shuffle=True)
