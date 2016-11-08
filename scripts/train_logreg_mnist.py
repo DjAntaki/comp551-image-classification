@@ -17,17 +17,23 @@ X_valid, y_valid = dataset
 X_valid = X_valid*1.0
 
 print("Building logistic regression model using MNIST dataset...")
-log_reg.sgd_optimization_MNIST();
+#log_reg.sgd_optimization_MNIST();
 print("Done.")
 
 print("Downsizing validation set...")
-num_example = len(X_valid)
-X_d = np.zeros(shape=(num_example,1,28,28),dtype="float32")
-for i, x in enumerate(X_valid):
-    X_d[i] = resize(x,(28,28))
+X_valid = resize(X_valid)
 print("Done.")
 
 print("Predicting...")
 predictions = log_reg.predict_MNIST(X_d)
 print("Accuracy score:")
 print accuracy_score(y_valid, predictions)
+
+def resize_dataset(X_valid):
+    print("Downsizing validation set...")
+    num_example = len(X_valid)
+    X_d = np.zeros(shape=(num_example,1,30,30),dtype="float32")
+    for i, x in enumerate(X_valid):
+        X_d[i] = resize(x,(30,30))
+    print("Done.")
+    return X_d

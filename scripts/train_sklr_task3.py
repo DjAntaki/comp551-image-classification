@@ -5,16 +5,32 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score, classification_report
 from data.preprocess import get_data, get_data_keras
+import gzip
+import six.moves.cPickle as pickle
+import skimage.transform
+from operator import itemgetter
 
 # Get the data
 n = 100000
 n_perturbed = 0
-
+mnist_data = False
 #X, y = get_data_keras(n, n_perturbed)
-X, y = get_data_keras(n, n_perturbed)
 # Reshape data as (example, features)
-X = X.reshape((n+n_perturbed,60*60))
-y = y.reshape((n+n_perturbed,))
+#X = X.reshape((n+n_perturbed,60*60))
+#y = y.reshape((n+n_perturbed,))
+
+if (mnist_data):
+    with gzip.open('./data/mnist.pkl.gz', 'rb') as f:
+        try:
+            train_set, valid_set, test_set = pickle.load(f, encoding='latin1')
+        except:
+            train_set, valid_set, test_set = pickle.load(f)
+
+    X, y = train_set
+else:
+    X, y = get_data(n, n_perturbed)
+    # Reshape data as (example, features)
+    X = X.reshape((n+n_perturbed,60*60))
 
 def crossValidate(X, y):
     print "Cross-validating..."
